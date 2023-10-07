@@ -22,7 +22,7 @@ func main() {
 
 	// Initialize AWS session configuration
 	config := &aws.Config{
-		Region: aws.String("us-east-1"), // Set region
+		Region: aws.String("ap-northeast-2"), // Asia/Seoul
 		Credentials: credentials.NewStaticCredentials(
 			awsAccessKeyID,
 			awsSecretAccessKey,
