@@ -62,7 +62,7 @@ resource "aws_security_group_rule" "eks_cluster_ingress_from_nodes" {
 }
 
 # EKS cluster resource
-resource "aws_eks_cluster" "eks" {
+resource "aws_eks_cluster" "demo" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster.arn
   version = "1.27"

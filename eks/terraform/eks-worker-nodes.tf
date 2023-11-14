@@ -45,7 +45,7 @@ resource "aws_security_group" "eks_node_sg" {
 }
 
 resource "aws_eks_node_group" "eks_node_group" {
-  cluster_name    = aws_eks_cluster.eks.name
+  cluster_name    = aws_eks_cluster.demo.name
   node_group_name = "worker-nodes"
   node_role_arn   = aws_iam_role.eks-node.arn
   subnet_ids      = aws_subnet.eks_subnet[*].id
