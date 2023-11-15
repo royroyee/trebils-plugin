@@ -2,37 +2,53 @@ variable "aws_region" {
   default = "ap-northeast-2"
 }
 
+variable "azs" {
+  description = "A list of availability zones names or ids in the region"
+  type = list(string)
+  default = ["ap-northeast-2a", "ap-northeast-2c"]
+}
 
 # EKS variable
 variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
-  default     = "eks-cluster"
+  default     = null
 }
 
+variable "cluster_version" {
+  description = "Cluster Version"
+  type = string
+  default = null
+}
 
 variable "node_name" {
   description = "The name of the EKS cluster node"
   type        = string
-  default     = "eks-node"
+  default     = null
 }
 
 variable "vpc_name" {
   description = "The name of the EKS VPC"
   type = string
-  default = "eks-vpc"
+  default = null
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR Range"
+  type = string
+  default = null
 }
 
 variable "subnet_name" {
   description = "The name of the EKS Subnet"
   type = string
-  default = "eks-subnet"
+  default = "null"
 }
 
 variable "internet_gateway_name" {
   description = "The name of the EKS Internet Gateway"
   type = string
-  default = "eks-gateway"
+  default = "null"
 }
 
 #variable "subnet_ids" {

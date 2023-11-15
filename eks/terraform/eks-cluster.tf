@@ -1,83 +1,48 @@
+data "aws_caller_identity" "current" {}
+
 locals {
-  common_tags = {
-    Project     = "multi-cloud"
-    Environment = "test"
-  }
+  node_group_name        = "${var.cluster_name}-node-group"
+  iam_role_policy_prefix = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy"
 }
 
-resource "aws_iam_role" "eks_cluster" {
-  name = var.cluster_name
+module "eks" {
+  source = "terraform-aws-modules/eks/aws"
 
-  assume_role_policy = jsonencode({
-    Version   = "2012-10-17",
-    Statement = [{
-      Effect    = "Allow",
-      Principal = {
-        Service = "eks.amazonaws.com"
-      },
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
 
-resource "aws_iam_role_policy_attachment" "eks_cluster_policies" {
-  for_each = toset([
-    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
-    "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  ])
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = true
 
-  policy_arn = each.value
-  role       = aws_iam_role.eks_cluster.name
-}
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.private_subnets
 
-# Cluster security group
-resource "aws_security_group" "eks_cluster_sg" {
-  name        = "eks-cluster-sg"
-  description = "Cluster communication with worker nodes"
-  vpc_id      = aws_vpc.eks_vpc.id
+  eks_managed_node_group_defaults = {
+    ami_type               = "AL2_x86_64"
+    disk_size              = 10
+    instance_types         = ["t2.small"]
+    # vpc_security_group_ids = [aws_security_group.additional.id]
+    vpc_security_group_ids = []
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    iam_role_additional_policies = {
+      "additional" = "${local.iam_role_policy_prefix}/${module.iam_policy_autoscaling.name}"
+    }
   }
 
-  tags = merge(
-    {
-      Name = "eks-node-group"
-    },
-    local.common_tags
-  )
-}
+  eks_managed_node_groups = {
+    ("${var.cluster_name}-node-group") = {
+      min_size     = 1
+      max_size     = 1
+      desired_size = 1
 
-# Allow worker nodes to communicate with the cluster
-resource "aws_security_group_rule" "eks_cluster_ingress_from_nodes" {
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
-  security_group_id = aws_security_group.eks_cluster_sg.id
-  type              = "ingress"
-  source_security_group_id = aws_security_group.eks_node_sg.id
-}
+      labels = {
+        ondemand = "true"
+      }
 
-# EKS cluster resource
-resource "aws_eks_cluster" "demo" {
-  name     = var.cluster_name
-  role_arn = aws_iam_role.eks_cluster.arn
-  version = "1.27"
-
-  vpc_config {
-    security_group_ids = [aws_security_group.eks_cluster_sg.id]
-    subnet_ids         = aws_subnet.eks_subnet[*].id
-  }
-
-  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policies]
-}
-
-data "aws_availability_zones" "available" {
-  filter {
-    name   = "zone-name"
-    values = ["ap-northeast-2a", "ap-northeast-2b"]
+      tags = {
+        "k8s.io/cluster-autoscaler/enabled" : "true"
+        "k8s.io/cluster-autoscaler/${var.cluster_name}" : "true"
+      }
+    }
   }
 }
