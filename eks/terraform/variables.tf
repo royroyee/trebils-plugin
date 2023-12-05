@@ -43,24 +43,24 @@ variable "internet_gateway_name" {
 variable "node_group_desired_size" {
   description = "Desired size of the EKS node group."
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "node_group_max_size" {
   description = "Maximum size of the EKS node group."
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "node_group_min_size" {
   description = "Minimum size of the EKS node group."
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "node_instance_type" {
   type = list(string)
-  default = ["t3.medium"]
+  default = ["c5.xlarge"]
 }
 
 variable "capacity_type" {
